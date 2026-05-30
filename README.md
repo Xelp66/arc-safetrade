@@ -83,6 +83,10 @@ npm run prisma:generate
 npm run dev
 ```
 
+If local development shows `Connection interrupted while trying to subscribe` with
+Next.js 16 Turbopack, this repo already routes `npm run dev` through Webpack via
+`next dev --webpack`.
+
 6. Open `http://localhost:3000`.
 
 ## Environment variables
@@ -101,7 +105,7 @@ Required values are documented in [.env.example](/C:/projeler/SafeTrade/.env.exa
 
 ## Useful scripts
 
-- `npm run dev`: Start the Next.js app.
+- `npm run dev`: Start the Next.js app with Webpack for stable local development.
 - `npm run lint`: Run ESLint.
 - `npm run prisma:generate`: Generate the Prisma client.
 - `npm run prisma:migrate`: Create and apply a development migration.

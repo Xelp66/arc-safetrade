@@ -145,18 +145,21 @@ export function TradeOnchainPanel({
 
   const displayError = error || writeError?.message || receiptError?.message || null;
 
-  const { data: balance } = useReadContract({
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     address: ARC_USDC_ADDRESS as Address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address as Address] : undefined,
     chainId: ARC_TESTNET_CHAIN_ID,
     query: {
-      enabled: Boolean(address && isOnArc),
+      enabled: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
     },
   });
 
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: ARC_USDC_ADDRESS as Address,
     abi: erc20Abi,
     functionName: "allowance",
@@ -166,18 +169,24 @@ export function TradeOnchainPanel({
         : undefined,
     chainId: ARC_TESTNET_CHAIN_ID,
     query: {
-      enabled: Boolean(address && isOnArc && escrowAddressConfigured),
+      enabled: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
     },
   });
 
-  const { data: onchainTrade } = useReadContract({
+  const { data: onchainTrade, refetch: refetchOnchainTrade } = useReadContract({
     address: ARC_ESCROW_CONTRACT_ADDRESS as Address,
     abi: arcSafeTradeEscrowAbi,
     functionName: "getTrade",
     args: savedContractTradeId !== null ? [BigInt(savedContractTradeId)] : undefined,
     chainId: ARC_TESTNET_CHAIN_ID,
     query: {
-      enabled: Boolean(savedContractTradeId !== null && escrowAddressConfigured),
+      enabled: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -198,6 +207,24 @@ export function TradeOnchainPanel({
   const amountMismatch =
     onchainTrade !== undefined && onchainTrade.amount !== amountInUsdc;
   const hasCriticalMismatch = buyerMismatch || sellerMismatch || amountMismatch;
+
+  useEffect(() => {
+    if (address && isOnArc) {
+      void refetchBalance();
+    }
+  }, [address, isOnArc, refetchBalance]);
+
+  useEffect(() => {
+    if (address && isOnArc && escrowAddressConfigured) {
+      void refetchAllowance();
+    }
+  }, [address, escrowAddressConfigured, isOnArc, refetchAllowance]);
+
+  useEffect(() => {
+    if (savedContractTradeId !== null && escrowAddressConfigured) {
+      void refetchOnchainTrade();
+    }
+  }, [escrowAddressConfigured, refetchOnchainTrade, savedContractTradeId]);
 
   useEffect(() => {
     async function persistReceiptSideEffects() {
@@ -262,6 +289,7 @@ export function TradeOnchainPanel({
           setSuccessMessage("Onchain escrow created on Arc.");
           setError(null);
           setCurrentAction(null);
+          void refetchOnchainTrade();
           router.refresh();
         } catch (persistError) {
           hasPatchedRef.current = false;
@@ -282,6 +310,7 @@ export function TradeOnchainPanel({
         setCurrentAction(null);
         setTimeout(() => {
           hasPatchedRef.current = false;
+          void refetchAllowance();
           router.refresh();
         }, 0);
         return;
@@ -313,6 +342,7 @@ export function TradeOnchainPanel({
           setSuccessMessage("Escrow funded with USDC on Arc.");
           setError(null);
           setCurrentAction(null);
+          void Promise.all([refetchBalance(), refetchAllowance(), refetchOnchainTrade()]);
           router.refresh();
         } catch (persistError) {
           hasPatchedRef.current = false;
@@ -353,6 +383,7 @@ export function TradeOnchainPanel({
           setSuccessMessage("Shipment recorded on Arc.");
           setError(null);
           setCurrentAction(null);
+          void refetchOnchainTrade();
           router.refresh();
         } catch (persistError) {
           hasPatchedRef.current = false;
@@ -392,6 +423,7 @@ export function TradeOnchainPanel({
           setSuccessMessage("USDC released to seller on Arc.");
           setError(null);
           setCurrentAction(null);
+          void Promise.all([refetchBalance(), refetchOnchainTrade()]);
           router.refresh();
         } catch (persistError) {
           hasPatchedRef.current = false;
@@ -433,6 +465,7 @@ export function TradeOnchainPanel({
           setSuccessMessage("Dispute opened on Arc.");
           setError(null);
           setCurrentAction(null);
+          void refetchOnchainTrade();
           router.refresh();
         } catch (persistError) {
           hasPatchedRef.current = false;
@@ -446,7 +479,18 @@ export function TradeOnchainPanel({
     }
 
     void persistReceiptSideEffects();
-  }, [currentAction, disputeReason, receipt, router, trackingNumber, trade.id, txHash]);
+  }, [
+    currentAction,
+    disputeReason,
+    receipt,
+    refetchAllowance,
+    refetchBalance,
+    refetchOnchainTrade,
+    router,
+    trackingNumber,
+    trade.id,
+    txHash,
+  ]);
 
   function prepareAction(action: TradeAction) {
     setError(null);
@@ -456,10 +500,15 @@ export function TradeOnchainPanel({
   }
 
   async function handleSyncFromChain() {
-    if (localStatusFromChain === null) {
+    const latestOnchain = await refetchOnchainTrade();
+    const latestStatus = latestOnchain.data?.status;
+
+    if (latestStatus === undefined) {
       setError("Onchain status is not available yet.");
       return;
     }
+
+    const mappedStatus = mapOnchainStatusToLocal(Number(latestStatus));
 
     setError(null);
     setSuccessMessage(null);
@@ -472,7 +521,7 @@ export function TradeOnchainPanel({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: localStatusFromChain,
+          status: mappedStatus,
         }),
       });
 
@@ -482,7 +531,7 @@ export function TradeOnchainPanel({
         throw new Error(data.error || "Failed to sync local status from chain");
       }
 
-      setSavedStatus(localStatusFromChain);
+      setSavedStatus(mappedStatus);
       setSuccessMessage("Local trade status synced from Arc.");
       router.refresh();
     } catch (syncError) {
