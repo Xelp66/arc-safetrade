@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -35,20 +34,18 @@ export function SiteHeader({
 
         <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
-            <Button
+            <Link
               key={item.href}
-              render={
-                <Link href={item.href} />
-              }
-              variant={currentPath === item.href ? "secondary" : "ghost"}
-              size="sm"
+              href={item.href}
               className={cn(
-                "rounded-full px-4",
-                currentPath === item.href && "shadow-sm",
+                "inline-flex h-7 items-center justify-center rounded-full px-4 text-[0.8rem] font-medium transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                currentPath === item.href
+                  ? "bg-secondary text-secondary-foreground shadow-sm"
+                  : "hover:bg-muted hover:text-foreground",
               )}
             >
               {item.label}
-            </Button>
+            </Link>
           ))}
         </nav>
       </div>

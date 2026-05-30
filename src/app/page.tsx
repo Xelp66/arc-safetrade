@@ -11,7 +11,7 @@ import {
 import { NetworkStatusCard } from "@/components/network-status-card";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const arcBadges = [
   {
@@ -89,22 +90,25 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Button
-                render={<Link href="/marketplace" />}
-                size="lg"
-                className="rounded-full px-7"
+              <Link
+                href="/marketplace"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "rounded-full px-7",
+                )}
               >
                 Browse Marketplace
                 <ArrowRight className="size-4" />
-              </Button>
-              <Button
-                render={<Link href="/sell" />}
-                size="lg"
-                variant="outline"
-                className="rounded-full px-7"
+              </Link>
+              <Link
+                href="/sell"
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "outline" }),
+                  "rounded-full px-7",
+                )}
               >
                 Sell an Item
-              </Button>
+              </Link>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

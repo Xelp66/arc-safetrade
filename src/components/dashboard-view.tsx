@@ -8,7 +8,7 @@ import { shortenAddress } from "@/lib/arc";
 import { Trade, formatPriceLabel } from "@/lib/marketplace";
 import { MarketplaceGrid } from "@/components/marketplace-grid";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 function TradeCard({ trade }: { trade: Trade }) {
   return (
@@ -39,13 +40,15 @@ function TradeCard({ trade }: { trade: Trade }) {
           <p className="text-sm text-muted-foreground">Escrow amount</p>
           <p className="text-lg font-semibold">{formatPriceLabel(trade.amount)}</p>
         </div>
-        <Button
-          render={<Link href={`/trade/${trade.id}`} />}
-          variant="outline"
-          className="rounded-full"
+        <Link
+          href={`/trade/${trade.id}`}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "rounded-full",
+          )}
         >
           Open trade
-        </Button>
+        </Link>
       </CardContent>
     </Card>
   );

@@ -11,7 +11,7 @@ import {
 
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const toolCards = [
   {
@@ -119,14 +120,16 @@ export default function ArcToolsPage() {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Button
-                render={<Link href="/marketplace" />}
-                size="lg"
-                className="rounded-full px-7"
+              <Link
+                href="/marketplace"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "rounded-full px-7",
+                )}
               >
                 Browse Marketplace
                 <ArrowRight className="size-4" />
-              </Button>
+              </Link>
               <Button
                 size="lg"
                 variant="outline"

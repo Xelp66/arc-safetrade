@@ -9,6 +9,26 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.next
+.env
+.env.local
+.env*.local
+
+coverage
+dist
+build
+
+.DS_Store
+Thumbs.db
+
+*.log
+
+prisma/dev.db
+prisma/dev.db-journal
+
+artifacts
+cache
+typechain-types
 
 # testing
 /coverage

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MapPin, Tag } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Listing, formatPriceLabel } from "@/lib/marketplace";
 import { shortenAddress } from "@/lib/arc";
+import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
   return (
@@ -65,12 +66,12 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <span className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
           Arc SafeTrade
         </span>
-        <Button
-          render={<Link href={`/listing/${listing.id}`} />}
-          className="rounded-full"
+        <Link
+          href={`/listing/${listing.id}`}
+          className={cn(buttonVariants(), "rounded-full")}
         >
           View listing
-        </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
