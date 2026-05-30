@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ListingStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+  CANCELLED
+}
+
+enum TradeStatus {
+  CREATED
+  FUNDED
+  SHIPPED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  REFUNDED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  username  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Listing {
+  id            String        @id @default(cuid())
+  title         String
+  description   String
+  price         Decimal       @db.Decimal(18, 6)
+  imageUrl      String?
+  category      String?
+  city          String?
+  sellerAddress String
+  status        ListingStatus @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  trades        Trade[]
+}
+
+model Trade {
+  id              String      @id @default(cuid())
+  listingId       String
+  contractTradeId Int?
+  buyerAddress    String
+  sellerAddress   String
+  amount          Decimal     @db.Decimal(18, 6)
+  status          TradeStatus @default(CREATED)
+  createTxHash    String?
+  fundTxHash      String?
+  shippedTxHash   String?
+  completedTxHash String?
+  disputeTxHash   String?
+  resolveTxHash   String?
+  trackingNumber  String?
+  disputeReason   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  listing         Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
