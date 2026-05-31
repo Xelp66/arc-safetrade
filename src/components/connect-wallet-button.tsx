@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 
 import { ARC_TESTNET_CHAIN_ID, shortenAddress } from "@/lib/arc";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ export function ConnectWalletButton() {
   const { address, chainId, isConnected } = useAccount();
   const { connect, connectors, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
 
   const injectedConnector = useMemo(
     () => connectors.find((connector) => connector.type === "injected"),
@@ -45,16 +46,33 @@ export function ConnectWalletButton() {
     );
   }
 
+  if (chainId !== ARC_TESTNET_CHAIN_ID) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          className="rounded-full px-5"
+          onClick={() => switchChain({ chainId: ARC_TESTNET_CHAIN_ID })}
+          disabled={isSwitchingChain}
+        >
+          {isSwitchingChain ? "Switching..." : "Switch to Arc Testnet"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="rounded-full px-4"
+          onClick={() => disconnect()}
+        >
+          Disconnect
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant={chainId === ARC_TESTNET_CHAIN_ID ? "outline" : "default"}
-        className="rounded-full px-5"
-      >
-        {chainId === ARC_TESTNET_CHAIN_ID
-          ? shortenAddress(address)
-          : "Wrong Network"}
+      <Button type="button" variant="outline" className="rounded-full px-5">
+        {shortenAddress(address)}
       </Button>
       <Button
         type="button"

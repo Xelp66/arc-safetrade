@@ -7,6 +7,7 @@ import {
   useAccount,
   useChainId,
   useReadContract,
+  useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
@@ -84,6 +85,7 @@ export function TradeOnchainPanel({
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentAction, setCurrentAction] = useState<TradeAction>(null);
@@ -742,6 +744,7 @@ export function TradeOnchainPanel({
   }
 
   const isBusy = isWriting || isConfirming;
+  const onchainActionsDisabled = isBusy || !isOnArc;
 
   return (
     <div className="space-y-4">
@@ -755,6 +758,23 @@ export function TradeOnchainPanel({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isConnected && !isOnArc ? (
+            <div className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+              <p className="text-sm font-medium text-amber-900">
+                Wrong network detected. Switch to Arc Testnet to use onchain escrow
+                actions.
+              </p>
+              <Button
+                type="button"
+                onClick={() => switchChain({ chainId: ARC_TESTNET_CHAIN_ID })}
+                disabled={isSwitchingChain}
+                className="w-full rounded-full"
+              >
+                {isSwitchingChain ? "Switching..." : "Switch to Arc Testnet"}
+              </Button>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
               <p className="text-sm text-muted-foreground">Onchain contract tradeId</p>
@@ -849,7 +869,7 @@ export function TradeOnchainPanel({
             <Button
               type="button"
               onClick={handleCreateOnchainEscrow}
-              disabled={isBusy}
+              disabled={onchainActionsDisabled}
               className="w-full rounded-full"
             >
               {currentAction === "create" && isBusy
@@ -881,7 +901,7 @@ export function TradeOnchainPanel({
                 <Button
                   type="button"
                   onClick={handleApproveUsdc}
-                  disabled={isBusy || !hasEnoughBalance}
+                  disabled={onchainActionsDisabled || !hasEnoughBalance}
                   className="w-full rounded-full"
                 >
                   {currentAction === "approve" && isBusy
@@ -899,7 +919,9 @@ export function TradeOnchainPanel({
               <Button
                 type="button"
                 onClick={handleFundEscrow}
-                disabled={isBusy || !hasEnoughBalance || !hasEnoughAllowance}
+                disabled={
+                  onchainActionsDisabled || !hasEnoughBalance || !hasEnoughAllowance
+                }
                 className="w-full rounded-full"
               >
                 {currentAction === "fund" && isBusy
@@ -924,7 +946,7 @@ export function TradeOnchainPanel({
               <Button
                 type="button"
                 onClick={handleMarkShipped}
-                disabled={isBusy}
+                disabled={onchainActionsDisabled}
                 className="w-full rounded-full"
               >
                 {currentAction === "ship" && isBusy
@@ -945,7 +967,7 @@ export function TradeOnchainPanel({
               <Button
                 type="button"
                 onClick={handleConfirmReceived}
-                disabled={isBusy}
+                disabled={onchainActionsDisabled}
                 className="w-full rounded-full"
               >
                 {currentAction === "complete" && isBusy
@@ -971,7 +993,7 @@ export function TradeOnchainPanel({
                 type="button"
                 variant="destructive"
                 onClick={handleOpenDispute}
-                disabled={isBusy || !disputeReason.trim()}
+                disabled={onchainActionsDisabled || !disputeReason.trim()}
                 className="w-full rounded-full"
               >
                 {currentAction === "dispute" && isBusy

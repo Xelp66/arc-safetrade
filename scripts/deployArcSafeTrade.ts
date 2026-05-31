@@ -1,10 +1,10 @@
-import { network } from "hardhat";
+import hre from "hardhat";
 
 const ARC_USDC_ADDRESS =
   process.env.ARC_USDC_ADDRESS || "0x3600000000000000000000000000000000000000";
 
 async function main() {
-  const { ethers } = await network.connect("arcTestnet");
+  const { ethers } = hre;
   const escrow = await ethers.deployContract("ArcSafeTradeEscrow", [
     ARC_USDC_ADDRESS,
   ]);

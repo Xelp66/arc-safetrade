@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { network } from "hardhat";
+import hre from "hardhat";
 
-const { ethers } = await network.create();
+const { ethers } = hre;
 
 const STATUS = {
   Created: 0n,
