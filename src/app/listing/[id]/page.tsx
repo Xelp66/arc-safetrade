@@ -12,26 +12,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { shortenAddress } from "@/lib/arc";
+import { getDb } from "@/lib/db";
 import { Listing, Trade, formatPriceLabel } from "@/lib/marketplace";
 
 type ListingDetailResponse = Listing & { trades: Trade[] };
 
 async function getListing(id: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/listings/${id}`, {
-    cache: "no-store",
+  const db = getDb();
+  const listing = await db.listing.findUnique({
+    where: { id },
+    include: { trades: true },
   });
 
-  if (response.status === 404) {
+  if (!listing) {
     return null;
   }
 
-  if (!response.ok) {
-    throw new Error("Failed to load listing");
-  }
-
-  return (await response.json()) as ListingDetailResponse;
+  return JSON.parse(JSON.stringify(listing)) as ListingDetailResponse;
 }
 
 export default async function ListingDetailPage({
