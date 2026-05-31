@@ -35,10 +35,12 @@ const initialFormState: FormState = {
 
 export function SellForm() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isReconnecting = status === "reconnecting";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,7 +104,18 @@ export function SellForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!isConnected ? (
+          {isReconnecting ? (
+            <Card className="rounded-2xl border border-border/70 bg-background/50">
+              <CardHeader>
+                <CardTitle className="text-base">Reconnecting wallet</CardTitle>
+                <CardDescription>
+                  Waiting for your previously connected wallet session to restore.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ) : null}
+
+          {!isConnected && !isReconnecting ? (
             <Card className="rounded-2xl border border-amber-500/30 bg-amber-500/10">
               <CardHeader>
                 <CardTitle className="text-base">Wallet required</CardTitle>
@@ -205,7 +218,7 @@ export function SellForm() {
 
             <Button
               type="submit"
-              disabled={!isConnected || isSubmitting}
+              disabled={!isConnected || isSubmitting || isReconnecting}
               className="rounded-full px-6"
             >
               {isSubmitting ? "Creating listing..." : "Create listing"}

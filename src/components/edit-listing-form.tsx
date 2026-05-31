@@ -33,7 +33,7 @@ export function EditListingForm({
   trades: Trade[];
 }) {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const [form, setForm] = useState<FormState>({
     title: listing.title,
     description: listing.description,
@@ -47,6 +47,7 @@ export function EditListingForm({
 
   const isOwner =
     address?.toLowerCase() === listing.sellerAddress.toLowerCase();
+  const isReconnecting = status === "reconnecting";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,6 +89,19 @@ export function EditListingForm({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isReconnecting) {
+    return (
+      <Card className="rounded-[1.75rem] border border-border/70 bg-card/85">
+        <CardHeader>
+          <CardTitle>Reconnecting wallet</CardTitle>
+          <CardDescription>
+            Waiting for the seller wallet session to restore before editing.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   if (!isConnected || !isOwner) {

@@ -7,15 +7,27 @@ import { ARC_TESTNET_CHAIN_ID, shortenAddress } from "@/lib/arc";
 import { Button } from "@/components/ui/button";
 
 export function ConnectWalletButton() {
-  const { address, chainId, isConnected } = useAccount();
+  const { address, chainId, isConnected, status } = useAccount();
   const { connect, connectors, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+  const isReconnecting = status === "reconnecting";
+  const isConnecting = status === "connecting" || isPending;
 
   const injectedConnector = useMemo(
     () => connectors.find((connector) => connector.type === "injected"),
     [connectors],
   );
+
+  if (isReconnecting) {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <Button type="button" className="rounded-full px-5" disabled>
+          Reconnecting...
+        </Button>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return (
@@ -23,7 +35,7 @@ export function ConnectWalletButton() {
         <Button
           type="button"
           className="rounded-full px-5"
-          disabled={!injectedConnector || isPending}
+          disabled={!injectedConnector || isConnecting}
           onClick={() => {
             if (!injectedConnector) {
               return;
@@ -35,7 +47,7 @@ export function ConnectWalletButton() {
             });
           }}
         >
-          {isPending ? "Connecting..." : "Connect Wallet"}
+          {isConnecting ? "Connecting..." : "Connect Wallet"}
         </Button>
         {error ? (
           <p className="max-w-52 text-right text-xs text-destructive">

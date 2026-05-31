@@ -55,7 +55,7 @@ function TradeCard({ trade }: { trade: Trade }) {
 }
 
 export function DashboardView() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const [activeTab, setActiveTab] = useState<"buying" | "selling">("buying");
   const [buyingTrades, setBuyingTrades] = useState<Trade[]>([]);
   const [sellingTrades, setSellingTrades] = useState<Trade[]>([]);
@@ -114,6 +114,19 @@ export function DashboardView() {
       isCancelled = true;
     };
   }, [address]);
+
+  if (status === "reconnecting") {
+    return (
+      <Card className="rounded-[1.75rem] border border-border/70 bg-card/85">
+        <CardHeader>
+          <CardTitle>Reconnecting wallet</CardTitle>
+          <CardDescription>
+            Restoring the dashboard for your previously connected address.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (!isConnected || !address) {
     return (

@@ -23,13 +23,14 @@ export function TradeCreationPanel({
   listingStatus: "ACTIVE" | "RESERVED" | "SOLD" | "CANCELLED";
 }) {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const normalizedAddress = address?.toLowerCase();
   const isSeller = normalizedAddress === sellerAddress.toLowerCase();
   const listingIsActive = listingStatus === "ACTIVE";
+  const isReconnecting = status === "reconnecting";
 
   async function startTrade() {
     if (!address) {
@@ -111,7 +112,13 @@ export function TradeCreationPanel({
           </p>
         ) : null}
 
-        {!isConnected ? (
+        {isReconnecting ? (
+          <p className="text-sm text-muted-foreground">
+            Reconnecting wallet session...
+          </p>
+        ) : null}
+
+        {!isConnected && !isReconnecting ? (
           <p className="text-sm text-muted-foreground">
             Connect your wallet to reserve this listing safely.
           </p>
@@ -126,7 +133,7 @@ export function TradeCreationPanel({
         <Button
           type="button"
           onClick={startTrade}
-          disabled={!isConnected || isSubmitting || !listingIsActive}
+          disabled={!isConnected || isSubmitting || !listingIsActive || isReconnecting}
           className="w-full rounded-full"
         >
           {isSubmitting ? "Starting..." : "Start SafeTrade"}
