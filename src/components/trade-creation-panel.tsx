@@ -16,9 +16,11 @@ import {
 export function TradeCreationPanel({
   listingId,
   sellerAddress,
+  listingStatus,
 }: {
   listingId: string;
   sellerAddress: string;
+  listingStatus: "ACTIVE" | "RESERVED" | "SOLD" | "CANCELLED";
 }) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
@@ -27,6 +29,7 @@ export function TradeCreationPanel({
 
   const normalizedAddress = address?.toLowerCase();
   const isSeller = normalizedAddress === sellerAddress.toLowerCase();
+  const listingIsActive = listingStatus === "ACTIVE";
 
   async function startTrade() {
     if (!address) {
@@ -101,6 +104,13 @@ export function TradeCreationPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!listingIsActive ? (
+          <p className="text-sm text-muted-foreground">
+            This listing is no longer active, so new SafeTrade reservations are
+            disabled.
+          </p>
+        ) : null}
+
         {!isConnected ? (
           <p className="text-sm text-muted-foreground">
             Connect your wallet to reserve this listing safely.
@@ -116,7 +126,7 @@ export function TradeCreationPanel({
         <Button
           type="button"
           onClick={startTrade}
-          disabled={!isConnected || isSubmitting}
+          disabled={!isConnected || isSubmitting || !listingIsActive}
           className="w-full rounded-full"
         >
           {isSubmitting ? "Starting..." : "Start SafeTrade"}

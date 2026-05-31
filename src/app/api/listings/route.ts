@@ -7,12 +7,8 @@ import { createListingSchema } from "@/lib/validators";
 export async function GET(request: Request) {
   try {
     const db = getDb();
-    const { searchParams } = new URL(request.url);
-    const sellerAddress = searchParams.get("sellerAddress")?.toLowerCase();
     const listings = await db.listing.findMany({
-      where: sellerAddress
-        ? { sellerAddress }
-        : { status: ListingStatus.ACTIVE },
+      where: { status: ListingStatus.ACTIVE },
       orderBy: { createdAt: "desc" },
     });
 

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { MapPin, Tag } from "lucide-react";
 
+import { ListingOwnerActions } from "@/components/listing-owner-actions";
 import { SiteHeader } from "@/components/site-header";
 import { TradeCreationPanel } from "@/components/trade-creation-panel";
 import { Badge } from "@/components/ui/badge";
@@ -118,9 +119,23 @@ export default async function ListingDetailPage({
         </section>
 
         <aside className="space-y-4">
+          <Card className="rounded-[1.5rem] border border-border/70 bg-card/85">
+            <CardHeader>
+              <CardTitle>Seller controls</CardTitle>
+              <CardDescription>
+                Manage this listing only while it is active and no SafeTrade has
+                started.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ListingOwnerActions listing={listing} trades={listing.trades} />
+            </CardContent>
+          </Card>
+
           <TradeCreationPanel
             listingId={listing.id}
             sellerAddress={listing.sellerAddress}
+            listingStatus={listing.status}
           />
 
           <Card className="rounded-[1.5rem] border border-border/70 bg-card/85">

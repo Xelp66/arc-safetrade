@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 
 import { shortenAddress } from "@/lib/arc";
 import { Trade, formatPriceLabel } from "@/lib/marketplace";
-import { MarketplaceGrid } from "@/components/marketplace-grid";
+import { SellerListingsPanel } from "@/components/seller-listings-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -140,7 +140,7 @@ export function DashboardView() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MarketplaceGrid sellerAddress={address.toLowerCase()} />
+          <SellerListingsPanel />
         </CardContent>
       </Card>
 

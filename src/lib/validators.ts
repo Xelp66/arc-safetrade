@@ -27,6 +27,16 @@ export const createListingSchema = z.object({
   sellerAddress: addressSchema,
 });
 
+export const updateListingSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(120),
+  description: z.string().trim().min(1, "Description is required").max(5000),
+  price: z.coerce.number().positive("Price must be greater than zero"),
+  imageUrl: z.string().trim().url("Invalid image URL").optional().or(z.literal("")),
+  category: z.string().trim().max(80).optional().or(z.literal("")),
+  city: z.string().trim().max(80).optional().or(z.literal("")),
+  sellerAddress: addressSchema,
+});
+
 export const createTradeSchema = z.object({
   listingId: z.string().trim().min(1, "Listing ID is required"),
   buyerAddress: addressSchema,
