@@ -12,11 +12,12 @@ export default function DashboardPage() {
           Wallet dashboard
         </Badge>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          Monitor listings and SafeTrade activity by wallet.
+          Manage listings, purchases, and escrow activity in one place.
         </h1>
         <p className="max-w-3xl text-lg leading-8 text-muted-foreground">
-          Listings created by the connected address appear first, followed by
-          Buying and Selling tabs for escrow trade records.
+          Manage your listings, shipments, purchases, and escrow activity from one
+          place. The connected wallet determines what you can create, ship,
+          confirm, or dispute.
         </p>
       </section>
 

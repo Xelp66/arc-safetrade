@@ -48,8 +48,9 @@ export default async function AdminDisputesPage() {
               Dispute review queue
             </h1>
             <p className="max-w-3xl text-lg leading-8 text-muted-foreground">
-              Review disputed escrow trades and resolve them on Arc Testnet with
-              the configured admin wallet.
+              Admin can resolve disputes by releasing escrow to the seller or
+              refunding the buyer. Every resolution happens on Arc Testnet before
+              local status is updated.
             </p>
           </div>
           <Badge variant="outline" className="rounded-full text-sm">
@@ -67,8 +68,9 @@ export default async function AdminDisputesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm leading-6 text-muted-foreground">
-          Admin arbitration is centralized in MVP. Future version will add
-          agent-assisted dispute analysis.
+          Admin arbitration is centralized in MVP. Review the trade facts, check
+          the onchain escrow status, and settle funds only when the outcome is
+          clear. Future versions can add agent-assisted dispute analysis.
         </CardContent>
       </Card>
 

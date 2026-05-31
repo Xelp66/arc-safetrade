@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { MapPin, Tag } from "lucide-react";
+import { CircleDollarSign, MapPin, PackageCheck, ShieldCheck, Tag } from "lucide-react";
 
 import { ListingOwnerActions } from "@/components/listing-owner-actions";
 import { SiteHeader } from "@/components/site-header";
@@ -18,11 +18,41 @@ import { Listing, Trade, formatPriceLabel } from "@/lib/marketplace";
 
 type ListingDetailResponse = Listing & { trades: Trade[] };
 
+const timelineLabels = [
+  "Created",
+  "Escrow funded",
+  "Shipped",
+  "Completed",
+] as const;
+
+function getTimelineIndex(status: Trade["status"]) {
+  switch (status) {
+    case "CREATED":
+      return 0;
+    case "FUNDED":
+      return 1;
+    case "SHIPPED":
+      return 2;
+    case "COMPLETED":
+      return 3;
+    case "DISPUTED":
+      return 2;
+    case "REFUNDED":
+      return 3;
+    default:
+      return 0;
+  }
+}
+
 async function getListing(id: string) {
   const db = getDb();
   const listing = await db.listing.findUnique({
     where: { id },
-    include: { trades: true },
+    include: {
+      trades: {
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
 
   if (!listing) {
@@ -39,6 +69,7 @@ export default async function ListingDetailPage({
 }) {
   const { id } = await params;
   const listing = await getListing(id);
+  const latestTrade = listing?.trades[0] ?? null;
 
   if (!listing) {
     notFound();
@@ -114,6 +145,19 @@ export default async function ListingDetailPage({
                   </CardHeader>
                 </Card>
               </div>
+
+              <div className="rounded-[1.25rem] border border-primary/20 bg-primary/5 p-5">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 size-5 text-primary" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Escrow protection</p>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      Your USDC will be locked in escrow. The seller receives funds
+                      only after you confirm delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -132,6 +176,41 @@ export default async function ListingDetailPage({
             </CardContent>
           </Card>
 
+          <Card className="rounded-[1.5rem] border border-border/70 bg-card/85">
+            <CardHeader>
+              <CardTitle>SafeTrade guidance</CardTitle>
+              <CardDescription>
+                Clear expectations for buyer and seller before escrow starts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <CircleDollarSign className="mt-0.5 size-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Buyer protection</p>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      Start SafeTrade only when you are ready to lock USDC in escrow
+                      on Arc Testnet.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <PackageCheck className="mt-0.5 size-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Seller protection</p>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      This is your listing. Once a buyer funds escrow, you can ship
+                      with confidence.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <TradeCreationPanel
             listingId={listing.id}
             sellerAddress={listing.sellerAddress}
@@ -140,12 +219,45 @@ export default async function ListingDetailPage({
 
           <Card className="rounded-[1.5rem] border border-border/70 bg-card/85">
             <CardHeader>
-              <CardTitle>Activity snapshot</CardTitle>
+              <CardTitle>SafeTrade activity</CardTitle>
               <CardDescription>
-                Local trade records created for this listing.
+                Trade records and timeline updates connected to this listing.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              {latestTrade ? (
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <p className="text-sm font-medium">Current transaction timeline</p>
+                  <div className="mt-3 grid gap-3">
+                    {timelineLabels.map((label, index) => {
+                      const complete =
+                        latestTrade.status === "DISPUTED"
+                          ? index <= 2
+                          : index <= getTimelineIndex(latestTrade.status);
+
+                      return (
+                        <div
+                          key={label}
+                          className={`rounded-2xl border px-4 py-3 text-sm ${
+                            complete
+                              ? "border-emerald-500/30 bg-emerald-500/10"
+                              : "border-border/60 bg-background/50"
+                          }`}
+                        >
+                          <span className="font-medium">{label}</span>
+                        </div>
+                      );
+                    })}
+                    {latestTrade.status === "DISPUTED" ? (
+                      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
+                        Completed / Disputed: admin review is required before funds
+                        move.
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
               {listing.trades.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No SafeTrade records yet.

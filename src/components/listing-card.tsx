@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Tag } from "lucide-react";
+import { MapPin, ShieldCheck, Tag } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -34,6 +34,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
       </div>
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap gap-2">
+          <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">
+            <ShieldCheck className="size-3" />
+            Protected by SafeTrade
+          </Badge>
+          <Badge variant="outline" className="rounded-full">
+            {listing.status}
+          </Badge>
           {listing.category ? (
             <Badge variant="outline" className="rounded-full">
               <Tag className="size-3" />
@@ -60,6 +67,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </div>
         <p className="text-sm text-muted-foreground">
           Seller: {shortenAddress(listing.sellerAddress)}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Escrow releases only after buyer confirmation.
         </p>
       </CardContent>
       <CardFooter className="mt-auto justify-between gap-3 border-t border-border/60 bg-background/40">

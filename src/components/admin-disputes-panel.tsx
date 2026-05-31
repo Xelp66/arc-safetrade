@@ -289,8 +289,8 @@ export function AdminDisputesPanel({
         <CardHeader>
           <CardTitle>Admin arbitration</CardTitle>
           <CardDescription>
-            Admin arbitration is centralized in MVP. Future version will add
-            agent-assisted dispute analysis.
+            Resolve escrow disputes only after reviewing the trade record, the
+            parties involved, and the onchain settlement state.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

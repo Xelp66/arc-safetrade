@@ -147,9 +147,10 @@ export function DashboardView() {
     <div className="space-y-8">
       <Card className="rounded-[1.75rem] border border-border/70 bg-card/85">
         <CardHeader>
-          <CardTitle>My listings</CardTitle>
+          <CardTitle>My Listings</CardTitle>
           <CardDescription>
-            Listings published by {shortenAddress(address)}.
+            Listings published by {shortenAddress(address)}. Active trade actions
+            appear here as soon as escrow starts.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -161,9 +162,10 @@ export function DashboardView() {
         <CardHeader className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle>Trade activity</CardTitle>
+              <CardTitle>Active Trades</CardTitle>
               <CardDescription>
-                Split into buying and selling views for the connected wallet.
+                Review your buyer-side purchases and seller-side escrow records
+                without leaving the dashboard.
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -173,7 +175,7 @@ export function DashboardView() {
                 className="rounded-full"
                 onClick={() => setActiveTab("buying")}
               >
-                Buying
+                My Purchases
               </Button>
               <Button
                 type="button"
@@ -181,7 +183,7 @@ export function DashboardView() {
                 className="rounded-full"
                 onClick={() => setActiveTab("selling")}
               >
-                Selling
+                Selling Activity
               </Button>
             </div>
           </div>
