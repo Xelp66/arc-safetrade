@@ -57,6 +57,22 @@ export async function PATCH(
       return errorResponse("Trade not found", 404);
     }
 
+    if (parsed.status === TradeStatus.SHIPPED) {
+      if (!parsed.sellerAddress) {
+        return errorResponse("sellerAddress is required to mark shipped", 400);
+      }
+
+      if (
+        existingTrade.sellerAddress.toLowerCase() !== parsed.sellerAddress.toLowerCase()
+      ) {
+        return errorResponse("Only the seller can mark this trade as shipped", 403);
+      }
+
+      if (existingTrade.status !== TradeStatus.FUNDED) {
+        return errorResponse("Only funded trades can be marked as shipped", 400);
+      }
+    }
+
     const updatedTrade = await db.$transaction(async (tx) => {
       const trade = await tx.trade.update({
         where: { id },

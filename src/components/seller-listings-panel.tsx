@@ -11,7 +11,9 @@ import {
   getCancelListingBlockReason,
   getEditListingBlockReason,
 } from "@/lib/listing-management";
+import { shortenAddress } from "@/lib/arc";
 import { Listing, Trade, formatPriceLabel } from "@/lib/marketplace";
+import { SellerTradeActions } from "@/components/seller-trade-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -25,12 +27,37 @@ import { cn } from "@/lib/utils";
 
 type SellerManagedListing = Listing & { trades: Trade[] };
 
+function getTradeStatusLabel(trade: Trade | null, listing: SellerManagedListing) {
+  if (trade?.status === "SHIPPED") {
+    return "Waiting for buyer confirmation";
+  }
+
+  if (trade?.status === "DISPUTED") {
+    return "Dispute opened";
+  }
+
+  if (trade?.status === "COMPLETED" || listing.status === "SOLD") {
+    return "Completed";
+  }
+
+  if (listing.status === "CANCELLED") {
+    return "Cancelled";
+  }
+
+  if (trade) {
+    return trade.status;
+  }
+
+  return listing.status === "ACTIVE" ? "Listed" : listing.status;
+}
+
 export function SellerListingsPanel() {
   const router = useRouter();
   const { address } = useAccount();
   const [listings, setListings] = useState<SellerManagedListing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,6 +71,7 @@ export function SellerListingsPanel() {
     async function loadListings() {
       setIsLoading(true);
       setError(null);
+      setSuccessMessage(null);
 
       try {
         const response = await fetch(
@@ -93,6 +121,7 @@ export function SellerListingsPanel() {
 
     setCancellingId(listing.id);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/listings/${listing.id}`, {
@@ -116,6 +145,7 @@ export function SellerListingsPanel() {
           item.id === listing.id ? { ...item, status: "CANCELLED" } : item,
         ),
       );
+      setSuccessMessage("Listing removed from the marketplace.");
       router.refresh();
     } catch (cancelError) {
       setError(
@@ -155,11 +185,21 @@ export function SellerListingsPanel() {
 
   return (
     <div className="space-y-4">
+      {successMessage ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">
+          {successMessage}
+        </div>
+      ) : null}
+
       {listings.map((listing) => {
+        const latestTrade = listing.trades[0] ?? null;
         const editAllowed = canEditListing(listing, listing.trades);
         const cancelAllowed = canCancelListing(listing, listing.trades);
         const editReason = getEditListingBlockReason(listing, listing.trades);
         const cancelReason = getCancelListingBlockReason(listing, listing.trades);
+        const hasTrade = latestTrade !== null;
+        const showManagementActions = listing.status === "ACTIVE" && !hasTrade;
+        const statusLabel = getTradeStatusLabel(latestTrade, listing);
 
         return (
           <Card
@@ -178,31 +218,130 @@ export function SellerListingsPanel() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href={`/listing/${listing.id}`}
-                  className={cn(buttonVariants({ variant: "outline" }), "rounded-full")}
-                >
-                  View
-                </Link>
-                {editAllowed ? (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                <div className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Listing
+                      </p>
+                      <p className="mt-2 text-sm font-medium">{statusLabel}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Buyer
+                      </p>
+                      <p className="mt-2 text-sm font-medium">
+                        {latestTrade ? shortenAddress(latestTrade.buyerAddress) : "No buyer yet"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Trade status
+                      </p>
+                      <p className="mt-2 text-sm font-medium">
+                        {latestTrade ? latestTrade.status : "No trade"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Contract tradeId
+                      </p>
+                      <p className="mt-2 text-sm font-medium">
+                        {latestTrade?.contractTradeId ?? "Not created"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {latestTrade ? (
+                    <p className="text-sm text-muted-foreground">
+                      Trade #{latestTrade.id.slice(0, 8)} is linked to this listing.
+                    </p>
+                  ) : null}
+
+                  {latestTrade ? (
+                    <SellerTradeActions
+                      trade={latestTrade}
+                      status={latestTrade.status}
+                      contractTradeId={latestTrade.contractTradeId}
+                      initialTrackingNumber={latestTrade.trackingNumber}
+                      compact
+                      onShipped={({ shippedTxHash, trackingNumber }) => {
+                        setSuccessMessage("Shipment recorded on Arc.");
+                        setListings((current) =>
+                          current.map((item) => {
+                            if (item.id !== listing.id || item.trades.length === 0) {
+                              return item;
+                            }
+
+                            const [mostRecentTrade, ...restTrades] = item.trades;
+
+                            return {
+                              ...item,
+                              trades: [
+                                {
+                                  ...mostRecentTrade,
+                                  status: "SHIPPED",
+                                  shippedTxHash,
+                                  trackingNumber,
+                                },
+                                ...restTrades,
+                              ],
+                            };
+                          }),
+                        );
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap gap-3 lg:flex-col lg:items-end">
                   <Link
-                    href={`/listing/${listing.id}/edit`}
+                    href={`/listing/${listing.id}`}
                     className={cn(buttonVariants({ variant: "outline" }), "rounded-full")}
                   >
-                    Edit
+                    View Listing
                   </Link>
+                  {latestTrade ? (
+                    <Link
+                      href={`/trade/${latestTrade.id}`}
+                      className={cn(buttonVariants({ variant: "outline" }), "rounded-full")}
+                    >
+                      View Trade
+                    </Link>
+                  ) : null}
+                  {showManagementActions && editAllowed ? (
+                    <Link
+                      href={`/listing/${listing.id}/edit`}
+                      className={cn(buttonVariants({ variant: "outline" }), "rounded-full")}
+                    >
+                      Edit Listing
+                    </Link>
+                  ) : null}
+                  {showManagementActions ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="rounded-full"
+                      onClick={() => handleCancel(listing)}
+                      disabled={!cancelAllowed || cancellingId === listing.id}
+                    >
+                      {cancellingId === listing.id ? "Cancelling..." : "Cancel Listing"}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {latestTrade?.status === "SHIPPED" ? (
+                  <p className="text-sm text-muted-foreground">
+                    Waiting for buyer confirmation on the funded SafeTrade.
+                  </p>
                 ) : null}
-                {listing.status === "ACTIVE" ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="rounded-full"
-                    onClick={() => handleCancel(listing)}
-                    disabled={!cancelAllowed || cancellingId === listing.id}
-                  >
-                    {cancellingId === listing.id ? "Cancelling..." : "Cancel"}
-                  </Button>
+                {latestTrade?.status === "DISPUTED" ? (
+                  <p className="text-sm text-muted-foreground">
+                    Dispute opened. Continue in the trade detail page for updates.
+                  </p>
                 ) : null}
               </div>
 

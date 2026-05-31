@@ -13,6 +13,7 @@ import {
 } from "wagmi";
 
 import { TradeTimeline } from "@/components/trade-timeline";
+import { SellerTradeActions } from "@/components/seller-trade-actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { arcSafeTradeEscrowAbi } from "@/lib/arc-safe-trade-escrow-abi";
 import {
@@ -40,7 +40,6 @@ type TradeAction =
   | "create"
   | "approve"
   | "fund"
-  | "ship"
   | "complete"
   | "dispute"
   | null;
@@ -358,47 +357,6 @@ export function TradeOnchainPanel({
         return;
       }
 
-      if (currentAction === "ship") {
-        hasPatchedRef.current = true;
-
-        try {
-          const response = await fetch(`/api/trades/${trade.id}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              status: "SHIPPED",
-              shippedTxHash: txHash,
-              trackingNumber: trackingNumber.trim() || undefined,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || "Failed to save shipped trade");
-          }
-
-          setSavedShippedTxHash(txHash);
-          setSavedStatus("SHIPPED");
-          setSuccessMessage("Shipment recorded on Arc.");
-          setError(null);
-          setCurrentAction(null);
-          void refetchOnchainTrade();
-          router.refresh();
-        } catch (persistError) {
-          hasPatchedRef.current = false;
-          setError(
-            persistError instanceof Error
-              ? persistError.message
-              : "Unexpected error while saving shipped trade",
-          );
-        }
-
-        return;
-      }
-
       if (currentAction === "complete") {
         hasPatchedRef.current = true;
 
@@ -489,7 +447,6 @@ export function TradeOnchainPanel({
     refetchBalance,
     refetchOnchainTrade,
     router,
-    trackingNumber,
     trade.id,
     txHash,
   ]);
@@ -641,37 +598,6 @@ export function TradeOnchainPanel({
       address: ARC_ESCROW_CONTRACT_ADDRESS as Address,
       abi: arcSafeTradeEscrowAbi,
       functionName: "fundTrade",
-      args: [BigInt(savedContractTradeId)],
-    });
-  }
-
-  function handleMarkShipped() {
-    if (!isConnected || !address) {
-      setError("Connect the seller wallet before marking shipment.");
-      return;
-    }
-
-    if (!isSeller) {
-      setError("Only the seller wallet can mark this trade as shipped.");
-      return;
-    }
-
-    if (!isOnArc) {
-      setError("Switch to Arc Testnet before marking shipment.");
-      return;
-    }
-
-    if (savedContractTradeId === null) {
-      setError("Onchain escrow must exist before shipping.");
-      return;
-    }
-
-    prepareAction("ship");
-
-    writeContract({
-      address: ARC_ESCROW_CONTRACT_ADDRESS as Address,
-      abi: arcSafeTradeEscrowAbi,
-      functionName: "markShipped",
       args: [BigInt(savedContractTradeId)],
     });
   }
@@ -933,30 +859,20 @@ export function TradeOnchainPanel({
             </div>
           ) : null}
 
-          {savedStatus === "FUNDED" && isSeller ? (
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-background/50 p-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tracking number (optional)</label>
-                <Input
-                  value={trackingNumber}
-                  onChange={(event) => setTrackingNumber(event.target.value)}
-                  placeholder="Carrier reference"
-                />
-              </div>
-              <Button
-                type="button"
-                onClick={handleMarkShipped}
-                disabled={onchainActionsDisabled}
-                className="w-full rounded-full"
-              >
-                {currentAction === "ship" && isBusy
-                  ? isWriting
-                    ? "Confirm shipment in wallet..."
-                    : "Waiting for shipped receipt..."
-                  : "Mark as Shipped"}
-              </Button>
-            </div>
-          ) : null}
+          <SellerTradeActions
+            trade={trade}
+            status={savedStatus}
+            contractTradeId={savedContractTradeId}
+            initialTrackingNumber={trackingNumber}
+            onShipped={({ shippedTxHash, trackingNumber: nextTrackingNumber }) => {
+              setSavedShippedTxHash(shippedTxHash);
+              setSavedStatus("SHIPPED");
+              setTrackingNumber(nextTrackingNumber ?? "");
+              setError(null);
+              setSuccessMessage("Shipment recorded on Arc.");
+              void refetchOnchainTrade();
+            }}
+          />
 
           {savedStatus === "SHIPPED" && isBuyer ? (
             <div className="space-y-3">
