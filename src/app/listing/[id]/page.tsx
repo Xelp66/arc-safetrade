@@ -5,6 +5,7 @@ import { ListingOwnerActions } from "@/components/listing-owner-actions";
 import { SiteHeader } from "@/components/site-header";
 import { TradeCreationPanel } from "@/components/trade-creation-panel";
 import { Badge } from "@/components/ui/badge";
+import { FallbackImage } from "@/components/fallback-image";
 import {
   Card,
   CardContent,
@@ -84,8 +85,7 @@ export default async function ListingDetailPage({
           <Card className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/85">
             <div className="aspect-[16/10] overflow-hidden border-b border-border/60 bg-muted">
               {listing.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <FallbackImage
                   src={listing.imageUrl}
                   alt={listing.title}
                   className="h-full w-full object-cover"

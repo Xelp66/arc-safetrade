@@ -30,12 +30,33 @@ type SellerTradeActionsProps = {
 };
 
 export function SellerTradeActions({
-  trade,
-  status,
+  compact = false,
   contractTradeId,
   initialTrackingNumber,
   onShipped,
+  status,
+  trade,
+}: SellerTradeActionsProps) {
+  return (
+    <SellerTradeActionsInner
+      key={`${trade.id}:${initialTrackingNumber ?? ""}`}
+      trade={trade}
+      status={status}
+      contractTradeId={contractTradeId}
+      initialTrackingNumber={initialTrackingNumber}
+      onShipped={onShipped}
+      compact={compact}
+    />
+  );
+}
+
+function SellerTradeActionsInner({
   compact = false,
+  contractTradeId,
+  initialTrackingNumber,
+  onShipped,
+  status,
+  trade,
 }: SellerTradeActionsProps) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
@@ -66,10 +87,6 @@ export function SellerTradeActions({
     chainId: ARC_TESTNET_CHAIN_ID,
     hash: txHash,
   });
-
-  useEffect(() => {
-    setTrackingNumber(initialTrackingNumber ?? "");
-  }, [initialTrackingNumber]);
 
   useEffect(() => {
     async function persistShipment() {

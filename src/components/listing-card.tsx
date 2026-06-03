@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FallbackImage } from "@/components/fallback-image";
 import { Listing, formatPriceLabel } from "@/lib/marketplace";
 import { shortenAddress } from "@/lib/arc";
 import { cn } from "@/lib/utils";
@@ -20,8 +21,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
     <Card className="h-full rounded-[1.5rem] border border-border/70 bg-card/85 shadow-[0_18px_48px_-36px_rgba(15,118,110,0.45)]">
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-[1.5rem] border-b border-border/60 bg-muted">
         {listing.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <FallbackImage
             src={listing.imageUrl}
             alt={listing.title}
             className="h-full w-full object-cover"

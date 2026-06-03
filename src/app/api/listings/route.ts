@@ -1,10 +1,11 @@
 import { ListingStatus, Prisma } from "@prisma/client";
 
 import { getDb } from "@/lib/db";
+import { normalizeImageUrl } from "@/lib/image-url";
 import { handleRouteError, json } from "@/lib/api";
 import { createListingSchema } from "@/lib/validators";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const db = getDb();
     const listings = await db.listing.findMany({
@@ -23,13 +24,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createListingSchema.parse(body);
     const db = getDb();
+    const imageUrl = parsed.imageUrl
+      ? await normalizeImageUrl(parsed.imageUrl)
+      : null;
 
     const listing = await db.listing.create({
       data: {
         title: parsed.title,
         description: parsed.description,
         price: new Prisma.Decimal(parsed.price),
-        imageUrl: parsed.imageUrl || null,
+        imageUrl,
         category: parsed.category || null,
         city: parsed.city || null,
         sellerAddress: parsed.sellerAddress,
